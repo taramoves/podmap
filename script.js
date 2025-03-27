@@ -6,7 +6,8 @@ let state = {
     isDragging: false,
     draggedElement: null,
     initialDateMapped: null,  // Track when the map was first created
-    progressCheckDates: []    // Array to store all progress check dates
+    progressCheckDates: [],    // Array to store all progress check dates
+    hasUnsavedChanges: false
 };
 
 // Constants
@@ -31,13 +32,15 @@ const StorageManager = {
                 pods: state.pods,
                 mapName: document.getElementById('map-name').value,
                 userName: document.getElementById('user-name').value,
-                dateMapped: document.getElementById('date-mapped').value,
+                dateMapped: document.getElementById('check-date').value,
                 checkDate: document.getElementById('check-date').value
             }
         };
         
         saves.push(saveData);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(saves));
+        state.hasUnsavedChanges = false;
+        updateSaveButton();
         return saveData;
     },
 
@@ -46,16 +49,28 @@ const StorageManager = {
         const save = saves.find(s => s.id === saveId);
         if (save) {
             state.pods = save.data.pods;
-            state.initialDateMapped = save.data.dateMapped;
-            state.progressCheckDates = save.data.checkDates || [save.data.checkDate];
             
+            // Keep the original date mapped
+            const originalDateMapped = save.data.dateMapped;
+            document.getElementById('check-date').value = originalDateMapped;
+            state.initialDateMapped = originalDateMapped;
+            
+            // Set progress check date to current date
+            const currentDate = new Date().toISOString().split('T')[0];
+            document.getElementById('check-date').value = currentDate;
+            
+            // Add new progress check date to history
+            state.progressCheckDates = save.data.progressCheckDates || [save.data.checkDate];
+            if (!state.progressCheckDates.includes(currentDate)) {
+                state.progressCheckDates.push(currentDate);
+            }
+            
+            // Load other map data
             document.getElementById('map-name').value = save.data.mapName || '';
             document.getElementById('user-name').value = save.data.userName || '';
-            document.getElementById('date-mapped').value = save.data.dateMapped || '';
-            document.getElementById('check-date').value = new Date().toISOString().split('T')[0];
-            
-            render();
-        }
+        
+        render();
+    }
     },
 
     deleteMap(saveId) {
@@ -77,7 +92,7 @@ const StorageManager = {
             pods: state.pods,
             mapName: document.getElementById('map-name').value,
             userName: document.getElementById('user-name').value,
-            dateMapped: state.initialDateMapped || document.getElementById('date-mapped').value,
+            dateMapped: state.initialDateMapped || document.getElementById('check-date').value,
             checkDates: state.progressCheckDates,
             currentCheckDate: checkDate,
             mapType: document.getElementById('map-type').value
@@ -105,6 +120,11 @@ const StorageManager = {
         
         // Show success message
         this.showNotification('Map saved successfully!');
+        
+        // After successful save
+        state.hasUnsavedChanges = false;
+        updateSaveButton();
+        
         return saveData;
     },
 
@@ -170,7 +190,6 @@ const DialogManager = {
 function setupEventListeners() {
     // Existing listeners
     document.getElementById('add-pod-member').addEventListener('click', () => handleAddMember());
-    document.getElementById('delete-selected').addEventListener('click', handleDeleteSelected);
     
     // New listeners for save/load functionality
     document.getElementById('save-map').addEventListener('click', () => StorageManager.saveMap());
@@ -186,8 +205,8 @@ function setupEventListeners() {
         if (e.target.id === 'worksheet') {
             state.selectedElement = null;
             state.isEditing = false;
-            render();
-        }
+        render();
+    }
     });
     
     // Add listener for new map button
@@ -198,7 +217,7 @@ function setupEventListeners() {
     });
     
     // Add listener for date-mapped changes to preserve initial date
-    document.getElementById('date-mapped').addEventListener('change', (e) => {
+    document.getElementById('check-date').addEventListener('change', (e) => {
         if (!state.initialDateMapped) {
             state.initialDateMapped = e.target.value;
         }
@@ -208,6 +227,8 @@ function setupEventListeners() {
     document.getElementById('export-map').addEventListener('click', () => {
         FileManager.exportMap();
     });
+
+    updateSaveButton(); // Initialize save button state
 }
 
 // Animation frame request ID
@@ -223,14 +244,8 @@ document.addEventListener('DOMContentLoaded', () => {
 function initializeWorksheet() {
     const worksheet = document.getElementById('worksheet');
     
-    // Create center pod
-    createCenterPod();
-    
-    // Add initial elements
-    addInitialElements();
-    
-    // Initial render
-    render();
+    // Set initial dates and create initial pod structure
+    initializeNewMap();
 }
 
 function createCenterPod() {
@@ -245,7 +260,8 @@ function createCenterPod() {
         radius: 50, // Reduced size
         members: [],
         potentialMembers: [],
-        networks: []
+            networks: [],
+        name: 'Description'
     });
 }
 
@@ -400,8 +416,9 @@ function handleAddMember(x, y, type = 'member') {
     state.isEditing = true;
         
         render();
-    }
-    
+    markUnsavedChanges();
+}
+
 function handleDeleteSelected() {
     if (!state.selectedElement) return;
     
@@ -419,8 +436,9 @@ function handleDeleteSelected() {
     
     state.selectedElement = null;
     state.isEditing = false;
-    
-    render();
+        
+        render();
+    markUnsavedChanges();
 }
 
 function render() {
@@ -439,12 +457,64 @@ function render() {
         podCircle.style.height = `${pod.radius * 2}px`;
         podCircle.style.transform = 'translate(-50%, -50%)';
         
-        // Add center text (map name)
-        const centerText = document.createElement('div');
-        centerText.className = 'center-text';
-        const mapNameInput = document.getElementById('map-name');
-        centerText.textContent = mapNameInput.value || 'Name of Map';
-        podCircle.appendChild(centerText);
+        if (pod.id === 'center') {
+            // Create a container for the text that will stay inside the circle
+            const textContainer = document.createElement('div');
+            textContainer.style.width = '100%';
+            textContainer.style.height = '100%';
+            textContainer.style.display = 'flex';
+            textContainer.style.alignItems = 'center';
+            textContainer.style.justifyContent = 'center';
+            
+            if (state.isEditing && state.selectedElement === pod.id) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'member-input';
+                input.value = pod.name;
+                input.placeholder = 'Description';
+                input.setAttribute('autocomplete', 'off');
+                input.setAttribute('data-form-type', 'other');
+                
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        pod.name = input.value;
+                        state.isEditing = false;
+                        render();
+                    }
+                e.stopPropagation();
+                });
+                
+                input.addEventListener('blur', () => {
+                    pod.name = input.value;
+                    state.isEditing = false;
+                    render();
+                });
+                
+                textContainer.appendChild(input);
+                setTimeout(() => {
+                    input.focus();
+                    input.select();
+                }, 0);
+            } else {
+                const textSpan = document.createElement('span');
+                textSpan.className = 'member-text';
+                textSpan.textContent = pod.name || 'Description';
+                textSpan.style.color = pod.name ? '#000' : '#888';
+                textContainer.appendChild(textSpan);
+            }
+            
+            podCircle.appendChild(textContainer);
+            
+            // Add click handler for editing
+            podCircle.addEventListener('click', (e) => {
+                if (!state.isDragging) {
+                    e.stopPropagation();
+                    state.selectedElement = pod.id;
+                    state.isEditing = true;
+                    render();
+                }
+            });
+        }
         
         worksheet.appendChild(podCircle);
         
@@ -463,6 +533,10 @@ function render() {
             renderElement(network, 'network', worksheet);
         });
     });
+    
+    if (!state.isDragging) {  // Don't mark as unsaved during drag operations
+        markUnsavedChanges();
+    }
 }
 
 function renderElement(element, className, container) {
@@ -490,6 +564,8 @@ function renderElement(element, className, container) {
                 return 'Potential Member';
             case 'network':
                 return 'Resource/Network';
+            case 'center-text':
+                return 'Description';
             default:
                 return 'Pod Member';
         }
@@ -518,9 +594,9 @@ function renderElement(element, className, container) {
                 element.name = input.value;
                 state.isEditing = false;
                 render();
-            }
+    }
             // Prevent the input from losing focus
-            e.stopPropagation();
+                e.stopPropagation();
         });
         
         input.addEventListener('blur', () => {
@@ -551,7 +627,7 @@ function renderElement(element, className, container) {
     deleteBtn.className = 'delete-btn';
     deleteBtn.setAttribute('type', 'button');
     deleteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
+                e.stopPropagation();
         state.selectedElement = element.id;
         handleDeleteSelected();
     });
@@ -560,10 +636,10 @@ function renderElement(element, className, container) {
     // Add click handler before drag handler to ensure proper event order
     elementDiv.addEventListener('click', (e) => {
         if (!state.isDragging && !e.target.classList.contains('delete-btn')) {
-            e.stopPropagation();
+                    e.stopPropagation();
             state.selectedElement = element.id;
             state.isEditing = true;
-            render();
+                    render();
         }
     });
     
@@ -585,6 +661,7 @@ function renderElement(element, className, container) {
                 state.isDragging = false;
                 state.draggedElement = null;
                 elementDiv.classList.remove('dragging');
+                markUnsavedChanges();
                 document.removeEventListener('mousemove', onMouseMove);
                 document.removeEventListener('mouseup', onMouseUp);
             };
@@ -615,22 +692,34 @@ function setupAutoSave() {
 
 const FileManager = {
     async exportMap() {
-        // Get the worksheet element
-        const worksheet = document.getElementById('worksheet');
+        // Get the entire app container instead of just the worksheet
+        const appContainer = document.querySelector('.app-container');
         
         try {
+            // Hide controls and dialogs temporarily for the screenshot
+            const controls = document.querySelector('.controls');
+            const dialogs = document.querySelectorAll('.dialog-overlay');
+            controls.style.display = 'none';
+            dialogs.forEach(dialog => dialog.style.display = 'none');
+            
             // Create a notification that export is in progress
             const notification = document.createElement('div');
             notification.className = 'export-notification';
             notification.textContent = 'Generating image...';
             document.body.appendChild(notification);
             
-            // Capture the worksheet as an image
-            const canvas = await html2canvas(worksheet, {
+            // Capture the app container as an image
+            const canvas = await html2canvas(appContainer, {
                 backgroundColor: 'white',
                 scale: 2, // Higher quality
-                useCORS: true
+                useCORS: true,
+                logging: false,
+                removeContainer: true
             });
+            
+            // Restore controls and dialogs
+            controls.style.display = 'flex';
+            dialogs.forEach(dialog => dialog.style.display = '');
             
             // Create download link
             const link = document.createElement('a');
@@ -648,6 +737,12 @@ const FileManager = {
         } catch (error) {
             console.error('Export failed:', error);
             alert('Failed to export map as image. Please try again.');
+            
+            // Ensure controls and dialogs are restored even if export fails
+            const controls = document.querySelector('.controls');
+            const dialogs = document.querySelectorAll('.dialog-overlay');
+            controls.style.display = 'flex';
+            dialogs.forEach(dialog => dialog.style.display = '');
         }
     },
 
@@ -703,13 +798,7 @@ function getSortedMaps(saves, { sortBy = 'date', category = null, searchTerm = '
 
 // Add function to initialize a new map
 function initializeNewMap() {
-    state.pods = [];
-    state.selectedElement = null;
-    state.isEditing = false;
-    state.isDragging = false;
-    state.draggedElement = null;
-    
-    // Set current date as the initial date mapped if not already set
+    // Set dates first, before any other operations
     const currentDate = new Date().toISOString().split('T')[0];
     document.getElementById('date-mapped').value = currentDate;
     document.getElementById('check-date').value = currentDate;
@@ -717,5 +806,34 @@ function initializeNewMap() {
     state.initialDateMapped = currentDate;
     state.progressCheckDates = [currentDate];
     
+    // Initialize the rest of the state
+    state.pods = [];
+    state.selectedElement = null;
+    state.isEditing = false;
+    state.isDragging = false;
+    state.draggedElement = null;
+    
+    // Create initial pod structure
+    createCenterPod();
+    addInitialElements();
+    
     render();
+    state.hasUnsavedChanges = true;
+    updateSaveButton();
+}
+
+// Add function to mark unsaved changes
+function markUnsavedChanges() {
+    state.hasUnsavedChanges = true;
+    updateSaveButton();
+}
+
+// Add function to update save button
+function updateSaveButton() {
+    const saveButton = document.getElementById('save-map');
+    if (state.hasUnsavedChanges) {
+        saveButton.classList.remove('saved');
+        } else {
+        saveButton.classList.add('saved');
+    }
 }

@@ -344,6 +344,22 @@ body {
     background-color: #f0f0f0;
 }
 
+.control-button.saved {
+    background-color: #4CAF50;
+    color: white;
+    border-color: #45a049;
+}
+
+.control-button.saved:hover {
+    background-color: #45a049;
+}
+
+.control-button.saved::after {
+    content: ' ✓';
+    color: #4CAF50;
+    font-weight: bold;
+}
+
 /* Dialog styles */
 .dialog-overlay {
     position: fixed;
@@ -541,4 +557,18 @@ body {
     border-radius: 4px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     z-index: 1000;
+}
+
+.resource-link {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.resource-link a {
+    color: #0066cc;
+    text-decoration: none;
+}
+
+.resource-link a:hover {
+    text-decoration: underline;
 }
