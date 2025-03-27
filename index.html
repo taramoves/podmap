@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pod Mapping Digital Worksheet</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header Info Box -->
+        <div class="header-box">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>Pod Mapping Digital Worksheet</h1>
+                    <p class="subtitle">Based on Mia Mingus's exercise for SOIL: A Transformative Justice Project</p>
+                </div>
+                <div class="header-right">
+                    <div class="info-field">
+                        <label for="user-name">Name:</label>
+                        <input type="text" id="user-name">
+                    </div>
+                    <div class="info-field">
+                        <label for="map-name">Name of Map:</label>
+                        <input type="text" id="map-name">
+                    </div>
+                    <div class="info-field">
+                        <label for="date-mapped">Date Mapped:</label>
+                        <input type="date" id="date-mapped">
+                    </div>
+                    <div class="info-field">
+                        <label for="check-date">Progress Check Date:</label>
+                        <input type="date" id="check-date">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canvas/Worksheet Area -->
+        <div class="worksheet-area" id="worksheet">
+            <!-- Pod content will be drawn here by JavaScript -->
+        </div>
+
+        <!-- Control Buttons (Minimal UI) -->
+        <div class="controls">
+            <div class="control-section">
+                <select id="map-type" class="control-button">
+                    <option value="single">Original Pod Map</option>
+                    <option value="skills">Skills & Needs Pod Map</option>
+                    <option value="multiple3">Multiple 3 Pods Map</option>
+                    <option value="multiple4">Multiple 4 Pods Map</option>
+                    <option value="shared">Shared Pods Map</option>
+                </select>
+            </div>
+            
+            <div class="control-section">
+                <button id="add-pod-member" class="control-button">Add Pod Member</button>
+                <button id="add-potential-member" class="control-button">Add Potential Member</button>
+                <button id="add-network" class="control-button">Add Resource/Network</button>
+                <button id="edit-name" class="control-button">Edit Selected</button>
+                <button id="delete-selected" class="control-button">Delete Selected</button>
+            </div>
+            
+            <div class="control-section">
+                <button id="new-map" class="control-button">New Map</button>
+                <button id="save-map" class="control-button">Save Map</button>
+                <button id="load-map" class="control-button">Load Map</button>
+                <button id="export-map" class="control-button">Export</button>
+                <button id="import-map" class="control-button">Import</button>
+                <input type="file" id="import-file" accept=".json" style="display: none;">
+            </div>
+            
+            <div class="control-section">
+                <button id="help-button" class="control-button">Instructions</button>
+            </div>
+        </div>
+        
+        <!-- Hidden Dialogs -->
+        <div id="saved-maps-dialog" class="dialog-overlay">
+            <div class="dialog">
+                <h2>Saved Maps</h2>
+                <div id="saved-maps-list" class="saved-maps-list"></div>
+                <div class="dialog-buttons">
+                    <button id="close-saved-maps" class="control-button">Close</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="help-dialog" class="dialog-overlay">
+            <div class="dialog">
+                <h2>Pod Mapping Instructions</h2>
+                <div class="dialog-content">
+                    <p>Pod mapping is a tool created by Mia Mingus to help people identify who they can turn to for various kinds of support.</p>
+                    
+                    <h3>How to Use This Tool</h3>
+                    <ul>
+                        <li>Choose a map type using the dropdown</li>
+                        <li>Fill in your name and map details</li>
+                        <li>Add pod members (solid-line circles)</li>
+                        <li>Add potential members (dotted-line circles)</li>
+                        <li>Add community resources or networks (larger circles)</li>
+                        <li>Click on any element to select it, then use the Edit or Delete buttons</li>
+                        <li>Save your map to return to it later (stored in your browser)</li>
+                        <li>Export your map as a file to back up or share</li>
+                    </ul>
+                    
+                    <p class="attribution">Based on pod mapping worksheets developed by Mia Mingus.</p>
+                </div>
+                <div class="dialog-buttons">
+                    <button id="close-help" class="control-button">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

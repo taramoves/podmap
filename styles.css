@@ -1,0 +1,544 @@
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+/* Main Layout */
+body {
+    background-color: white;
+    color: black;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 100vh;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Header Box (Mimics the worksheet header) */
+.header-box {
+    border: 1px solid black;
+    margin-bottom: 20px;
+    padding: 20px;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    gap: 40px;
+}
+
+.header-left {
+    flex: 1;
+}
+
+.header-left h1 {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.header-left .subtitle {
+    font-size: 14px;
+    color: #333;
+}
+
+.header-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.info-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.info-field label {
+    min-width: 140px;
+    font-weight: bold;
+}
+
+.info-field input {
+    flex: 1;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+/* Worksheet Area (Main canvas) */
+.worksheet-area {
+    flex: 1;
+    min-height: 600px;
+    border: 1px solid #ddd;
+    position: relative;
+    overflow: auto;
+    background-color: white;
+    margin-bottom: 20px;
+}
+
+/* Pod Elements */
+.pod {
+    position: absolute;
+    transform: translate(-50%, -50%);
+}
+
+.pod-name {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.pod-center-line {
+    position: absolute;
+    height: 1px;
+    background-color: black;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50px;
+}
+
+.pod-circle {
+    border: 2px solid black;
+    border-radius: 50%;
+    position: relative;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+}
+
+.center-text {
+    font-size: 14px;
+    text-align: center;
+    color: #333;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.pod-member {
+    width: 80px;
+    height: 80px;
+    border: 2px solid black;
+    border-radius: 50%;
+    background: white;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    word-break: break-word;
+    overflow: hidden;
+    user-select: none;
+    will-change: transform, left, top;
+    z-index: 1;
+}
+
+.pod-member .member-text {
+    width: 100%;
+    text-align: center;
+    pointer-events: none;
+}
+
+.pod-member:hover,
+.potential-member:hover,
+.network:hover {
+    background: #f5f5f5;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 2;
+}
+
+.pod-member.selected,
+.potential-member.selected,
+.network.selected {
+    background: #e0e0e0;
+    box-shadow: 0 0 0 2px #007bff, 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 2;
+}
+
+.pod-member.dragging,
+.potential-member.dragging,
+.network.dragging {
+    cursor: grabbing;
+    z-index: 100;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.delete-btn {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid #000;
+    background: #fff;
+    color: #000;
+    font-size: 18px;
+    line-height: 15px;
+    cursor: pointer;
+    padding: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Arial, sans-serif;
+    pointer-events: auto;
+    box-shadow: 0 0 0 1px #fff;
+}
+
+.delete-btn::before {
+    content: '×';
+    display: block;
+    margin-top: -1px;
+}
+
+.delete-btn:hover {
+    background: #f0f0f0;
+}
+
+/* Override any potential interference */
+.pod-member, .potential-member, .network {
+    overflow: visible !important;
+}
+
+.add-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid black;
+    background: white;
+    color: black;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 0.2s ease;
+}
+
+.add-btn:hover {
+    background: #f5f5f5;
+}
+
+.potential-member {
+    width: 80px;
+    height: 80px;
+    border: 2px dashed black;
+    border-radius: 50%;
+    background: white;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    word-break: break-word;
+    overflow: hidden;
+    user-select: none;
+    will-change: transform, left, top;
+    z-index: 1;
+}
+
+.potential-member.selected {
+    background-color: #f0f0f0;
+    box-shadow: 0 0 0 2px blue;
+}
+
+.network {
+    width: 80px;
+    height: 80px;
+    border: 2px solid black;
+    border-radius: 50%;
+    background: white;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 5px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    word-break: break-word;
+    overflow: hidden;
+    user-select: none;
+    will-change: transform, left, top;
+    z-index: 1;
+}
+
+.network.selected {
+    background-color: #f0f0f0;
+    box-shadow: 0 0 0 2px blue;
+}
+
+.shared-member {
+    background-color: #f0f0f0;
+    z-index: 10;
+}
+
+.connector-line {
+    stroke: black;
+    stroke-width: 1;
+    stroke-dasharray: 4;
+    pointer-events: none;
+}
+
+.skill-list {
+    position: absolute;
+    font-size: 12px;
+    max-width: 150px;
+    line-height: 1.2;
+}
+
+/* Controls */
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 0;
+    justify-content: center;
+}
+
+.control-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.control-button {
+    background-color: white;
+    border: 1px solid black;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.control-button:hover {
+    background-color: #f0f0f0;
+}
+
+/* Dialog styles */
+.dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.dialog {
+    background-color: white;
+    border: 1px solid black;
+    padding: 20px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.dialog h2 {
+    margin-bottom: 15px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+}
+
+.dialog-content {
+    margin-bottom: 20px;
+}
+
+.dialog-content h3 {
+    margin: 15px 0 10px;
+}
+
+.dialog-content ul {
+    padding-left: 20px;
+    margin-bottom: 15px;
+}
+
+.dialog-content li {
+    margin-bottom: 5px;
+}
+
+.dialog-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.attribution {
+    font-style: italic;
+    font-size: 12px;
+    margin-top: 20px;
+    color: #666;
+}
+
+/* Saved maps list */
+.saved-maps-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.saved-map-item {
+    border: 1px solid #ccc;
+    padding: 10px;
+    cursor: pointer;
+}
+
+.saved-map-item:hover {
+    background-color: #f0f0f0;
+}
+
+.saved-map-item .map-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.saved-map-item .map-date {
+    font-size: 12px;
+    color: #666;
+}
+
+.saved-map-actions {
+    display: flex;
+    gap: 5px;
+    margin-top: 5px;
+}
+
+/* Edit name popup */
+.edit-popup {
+    position: absolute;
+    background-color: white;
+    border: 1px solid black;
+    padding: 10px;
+    z-index: 100;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.edit-popup input {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 5px;
+    border: 1px solid #ccc;
+}
+
+.edit-popup-buttons {
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Responsive adjustments */
+@media (max-width: 800px) {
+    .info-row {
+        flex-direction: column;
+    }
+    
+    .info-cell {
+        border-right: none !important;
+        border-bottom: 1px solid black;
+    }
+    
+    .info-cell:last-child {
+        border-bottom: none;
+    }
+    
+    .controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .control-section {
+        justify-content: center;
+    }
+}
+
+/* Print styles - make it look like a worksheet when printed */
+@media print {
+    .controls {
+        display: none;
+    }
+    
+    .header-box {
+        border: 1px solid black !important;
+        print-color-adjust: exact;
+    }
+    
+    .worksheet-area {
+        border: none;
+        height: auto;
+        overflow: visible;
+    }
+    
+    body {
+        background-color: white !important;
+    }
+    
+    .pod-member, .potential-member, .network {
+        print-color-adjust: exact;
+    }
+    
+    .app-container {
+        padding: 0;
+    }
+}
+
+.member-input {
+    width: 90%;
+    height: 80%;
+    border: none;
+    background: transparent;
+    text-align: center;
+    font-size: 12px;
+    padding: 2px;
+    outline: none;
+    font-family: inherit;
+}
+
+.member-input:focus {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.export-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border: 1px solid #ccc;
+    padding: 10px 20px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 1000;
+}
